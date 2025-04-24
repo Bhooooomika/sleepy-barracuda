@@ -1,19 +1,29 @@
-body {
-    background-color: #111;
-    color: #fff;
-    font-family: 'Segoe UI', sans-serif;
-}
-
-.dashboard-title {
+.title {
     font-size: 3em;
-    color: #00ffe1;
+    font-weight: bold;
+    color: #00bfff;
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
+.section-title {
+    font-size: 1.5em;
+    color: #333;
+    margin-top: 20px;
+}
+
+.stButton button:hover,
+.stTextInput input:hover {
+    background-color: #e0f7fa;
+    border-color: #00bcd4;
+    transition: all 0.3s ease;
+}
+
+/* Fix input background and text contrast */
 input.chat-input, .stTextInput input {
-    background-color: white !important;
-    color: black !important;
-    border-radius: 8px;
+    background-color: #ffffff !important;
+    color: #000000 !important;
     padding: 10px;
+    border-radius: 5px;
+    width: 100%;
 }
