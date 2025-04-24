@@ -1,79 +1,73 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import random
-import time
-import json
 
-# -------------- PAGE CONFIG -----------------
-st.set_page_config(page_title="Smart Home Dashboard", layout="wide")
+# Set page config
+st.set_page_config(layout="wide", page_title="Smart Home Dashboard")
 
-# -------------- CUSTOM CSS ------------------
-with open("public/style.css") as f:
+# Load CSS
+with open("assets/style.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# -------------- HEADER ----------------------
-st.markdown("<h1 class='dashboard-title'>Smart Home Energy Dashboard</h1>", unsafe_allow_html=True)
+# ---------- TITLE ----------
+st.markdown('<div class="title">Smart Home Energy Dashboard ⚡</div>', unsafe_allow_html=True)
 
-# -------------- CHART AREA ------------------
-st.subheader("📈 Real-Time Energy Usage")
-components.html(open("public/chart.html").read(), height=400)
+# ---------- SECTIONS ----------
+col1, col2 = st.columns(2)
 
-# -------------- PREDICTED vs ACTUAL --------------
-st.subheader("🔮 Predicted vs Actual Energy Usage")
-actual = [random.uniform(1.5, 4) for _ in range(12)]
-predicted = [val + random.uniform(-0.3, 0.3) for val in actual]
-
-st.line_chart({"Actual": actual, "Predicted": predicted})
-
-# -------------- CHATBOT ----------------------
-st.subheader("🤖 Chat with EnergyBot")
-
+# Simulated appliance data
 appliances = {
-    "Dishwasher": 1.2,
-    "Fridge": 0.3,
-    "Furnace": 1.5,
-    "Home Office": 0.8,
-    "Wine Cellar": 0.6
+    "Dishwasher": 1.5,
+    "Furnace 1": 2.0,
+    "Furnace 2": 2.2,
+    "Home Office": 0.5,
+    "Fridge": 0.8,
+    "Wine Cellar": 0.4
 }
-cost_per_kwh = 0.12
 
-def chatbot_response(user_input):
-    user_input = user_input.lower()
+average_cost_per_kw = 5.5  # ₹ per kWh
 
-    if "cost" in user_input:
-        total_cost = sum(appliances.values()) * cost_per_kwh
-        return f"💸 Estimated cost per hour: ${total_cost:.2f}"
+# ---------- COLUMN 1: Realtime Chart + Predicted vs Actual ----------
+with col1:
+    st.markdown('<div class="section-title">🔁 Real-Time Energy Usage</div>', unsafe_allow_html=True)
+    components.html(open("assets/chart.html").read(), height=400)
 
-    elif "average" in user_input:
-        avg = sum(appliances.values()) / len(appliances)
-        return f"📊 The average usage across devices is {avg:.2f} kW."
+    st.markdown('<div class="section-title">📉 Predicted vs Actual</div>', unsafe_allow_html=True)
+    st.line_chart({
+        "Predicted": [random.uniform(1.0, 3.5) for _ in range(20)],
+        "Actual": [random.uniform(1.0, 3.0) for _ in range(20)],
+    })
 
-    elif "usage" in user_input:
-        usage_lines = [f"{k}: {v} kW" for k, v in appliances.items()]
-        return "⚡ Here's the usage of each device:\n" + "\n".join(usage_lines)
+# ---------- COLUMN 2: Calculator + Chatbot ----------
+with col2:
+    st.markdown('<div class="section-title">🔢 Wattage Calculator</div>', unsafe_allow_html=True)
 
-    return "🤷‍♂️ Sorry, I didn’t understand. Try asking about 'cost', 'usage', or 'average usage'."
+    selected_appliance = st.selectbox("Select Appliance", list(appliances.keys()))
+    hours_used = st.slider("Usage Hours Per Day", 1, 24, 4)
 
-with st.container():
-    user_input = st.text_input("Ask EnergyBot something:", key="chat_input")
+    wattage = appliances[selected_appliance]
+    energy_used = wattage * hours_used
+    cost = energy_used * average_cost_per_kw
+
+    st.success(f"🔌 {selected_appliance} uses {energy_used:.2f} kWh/day costing ₹{cost:.2f}/day.")
+
+    # Chatbot section
+    st.markdown('<div class="section-title">🤖 Smart Home Chatbot</div>', unsafe_allow_html=True)
+
+    user_input = st.text_input("Ask me anything about energy usage or appliance costs:", key="chatbox", placeholder="E.g., What's the average usage of the fridge?")
+    
+    def chatbot_response(user_input):
+        user_input = user_input.lower()
+        for appliance in appliances:
+            if appliance.lower() in user_input:
+                avg = appliances[appliance]
+                cost = avg * hours_used * average_cost_per_kw
+                return f"{appliance} consumes about {avg:.2f} kWh/hour. That’s ₹{cost:.2f}/day if used {hours_used} hrs/day."
+        if "average usage" in user_input or "cost" in user_input:
+            total = sum(appliances.values())
+            return f"Average usage per appliance is around {total/len(appliances):.2f} kWh/hr. Daily cost (avg): ₹{(total*hours_used*average_cost_per_kw)/len(appliances):.2f}."
+        return "I'm not sure about that, but I can help with appliance usage and cost!"
+
     if user_input:
-        response = chatbot_response(user_input)
-        st.success(response)
-
-# -------------- WATTAGE CALCULATOR ----------------------
-st.subheader("🧮 Wattage Calculator")
-
-with st.form("calc_form"):
-    device_name = st.text_input("Device name:")
-    device_watt = st.number_input("Power (Watts):", min_value=1)
-    hours = st.number_input("Usage Hours per Day:", min_value=0.0)
-    submitted = st.form_submit_button("Calculate")
-
-    if submitted:
-        kwh = (device_watt * hours) / 1000
-        cost = kwh * cost_per_kwh
-        st.write(f"⚡ Daily Usage: {kwh:.2f} kWh")
-        st.write(f"💵 Estimated Daily Cost: ${cost:.2f}")
-
-# -------------- FOOTER ----------------------
-st.markdown("<footer>Made with ❤️ for Smart Energy</footer>", unsafe_allow_html=True)
+        st.markdown(f"**You:** {user_input}")
+        st.markdown(f"**Bot:** {chatbot_response(user_input)}")
